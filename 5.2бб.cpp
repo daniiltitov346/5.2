@@ -1,186 +1,248 @@
-﻿////2.1.1
+﻿//2.1
 //#include <iostream>
 //#include <vector>
+//#include <unordered_map>
 //#include <algorithm>
+//#include <cstdlib>
+//#include <ctime>
 //
 //using namespace std;
 //
-//bool areDigitsUnique(int n) {
-//    if (n < 10) {
-//        return true; // однозначное число всегда имеет уникальные цифры
+//vector<int> find_repeating_numbers(const vector<int>& sequence) {
+//    unordered_map<int, int> count_map;
+//    vector<int> result;
+//
+//    // Первый проход: подсчет количества вхождений
+//    for (int num : sequence) {
+//        count_map[num]++;
 //    }
 //
-//    vector<int> digits;
-//
-//    while (n > 0) {
-//        int digit = n % 10;
-//        digits.push_back(digit);
-//        n /= 10;
-//    }
-//
-//    // Сортируем цифры 
-//    sort(digits.begin(), digits.end());
-//
-//    for (size_t i = 0; i < digits.size() - 1; ++i) {
-//        if (digits[i] == digits[i + 1]) {
-//            return false;
+//    // Второй проход: сбор чисел, встречающихся более одного раза
+//    for (const auto& pair : count_map) {
+//        if (pair.second > 1) {
+//            result.push_back(pair.first);
 //        }
 //    }
 //
-//    return true;
+//    // Сортировка результата
+//    sort(result.begin(), result.end());
+//
+//    return result;
 //}
 //
 //int main() {
 //    int n;
-//    cout << "Enter n: ";
+//    cout << "enter size (n <= 10^12): ";
 //    cin >> n;
 //
-//    if (areDigitsUnique(n)) {
-//        cout << "are unique." << endl;
+//    vector<int> sequence(n);
+//
+//    char choice;
+//    cout << "random? (y/n): ";
+//    cin >> choice;
+//
+//    if (choice == 'y' || choice == 'Y') {
+//        srand(time(0));
+//        for (int i = 0; i < n; ++i) {
+//            sequence[i] = rand() % 10000000 + 1; // Числа ≤ 10^7
+//        }
 //    }
 //    else {
-//        cout << "are not unique." << endl;
-//    }
-//
-//    return 0;
-//}
-
-////2.1.2
-//#include <iostream>
-//#include <vector>
-//#include <cmath>
-//#include <sstream>
-//#include <algorithm>
-//
-//using namespace std;
-//
-//int sumDigitsAfterN(double number, int n, int k) {
-//    double fractional = number - floor(number);
-//
-//    // Преобразуем дробную часть в строку
-//    ostringstream oss;
-//    oss << fractional;
-//    string str = oss.str();
-//
-//    if (str.size() >= 2 && str[0] == '0' && str[1] == '.') {
-//        str = str.substr(2);
-//    }
-//
-//    // Преобразуем строку цифр в вектор чисел
-//    vector<int> digits;
-//    for (char c : str) {
-//        if (isdigit(c)) {
-//            digits.push_back(c - '0');
+//        cout << "enter " << n << " numbers:\n";
+//        for (int i = 0; i < n; ++i) {
+//            cin >> sequence[i];
 //        }
 //    }
 //
-//    // Проверяем, что n не выходит за границы вектора
-//    if (n >= digits.size()) {
-//        return 0;
+//    // Обработка последовательности
+//    vector<int> result = find_repeating_numbers(sequence);
+//
+//    // Вывод результата
+//    cout << "sorted:\n";
+//    for (int num : result) {
+//        cout << num << " ";
 //    }
-//
-//    // Вычисляем сумму k цифр, начиная с позиции n
-//    int sum = 0;
-//    for (int i = n; i < n + k && i < digits.size(); ++i) {
-//        sum += digits[i];
-//    }
-//
-//    return sum;
-//}
-//
-//int main() {
-//    double num;
-//    int n, k;
-//
-//    cout << "Enter: ";
-//    cin >> num;
-//
-//    cout << "enter n: ";
-//    cin >> n;
-//
-//    cout << "enter k: ";
-//    cin >> k;
-//
-//    int result = sumDigitsAfterN(num, n, k);
-//    cout << "sum: " << result << endl;
+//    cout << endl;
 //
 //    return 0;
 //}
 //2.2
 #include <iostream>
 #include <vector>
-#include <cmath>
+#include <stdexcept>
 #include <iomanip>
+#include <memory>
 
 using namespace std;
 
-// Вычисляет 1/(1+x) с помощью ряда Тейлора (1 - x + x^2 - x^3 + ...)
-// Возвращает {результат, количество слагаемых}
-pair<double, int> taylor_series(double x, double epsilon = 1e-6) {
-    if (abs(x) >= 1.0) {
-        throw invalid_argument("Ряд Тейлора для 1/(1+x) сходится только при |x| < 1");
+// Способ 1: Линейное представление матрицы (одномерный массив)
+class MatrixLinear {
+private:
+    vector<double> data;
+    size_t rows, cols;
+
+public:
+    MatrixLinear(size_t r, size_t c) : rows(r), cols(c), data(r* c) {}
+
+    double& operator()(size_t i, size_t j) {
+        if (i >= rows || j >= cols) throw out_of_range("Matrix indices out of range");
+        return data[i * cols + j];
     }
 
-    double sum = 0.0;
-    double term = 1.0; // Первый член ряда: (-x)^0 = 1
-    int n = 0;
-
-    while (abs(term) > epsilon) {
-        sum += term;
-        n++;
-        term = pow(-x, n); // Следующий член: (-x)^n
+    const double& operator()(size_t i, size_t j) const {
+        if (i >= rows || j >= cols) throw out_of_range("Matrix indices out of range");
+        return data[i * cols + j];
     }
 
-    return make_pair(sum, n);
+    size_t getRows() const { return rows; }
+    size_t getCols() const { return cols; }
+
+    MatrixLinear power(unsigned n) const;
+    MatrixLinear operator*(const MatrixLinear& other) const;
+
+    static MatrixLinear identity(size_t size) {
+        MatrixLinear m(size, size);
+        for (size_t i = 0; i < size; ++i) m(i, i) = 1;
+        return m;
+    }
+
+    void print() const {
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                cout << setw(8) << fixed << setprecision(2) << (*this)(i, j);
+            }
+            cout << endl;
+        }
+    }
+};
+
+// Способ 2: Массив указателей (двумерный массив)
+class MatrixPointer {
+private:
+    vector<vector<double>> data;
+
+public:
+    MatrixPointer(size_t r, size_t c) : data(r, vector<double>(c)) {}
+
+    double& operator()(size_t i, size_t j) {
+        if (i >= data.size() || j >= data[0].size()) throw out_of_range("Matrix indices out of range");
+        return data[i][j];
+    }
+
+    const double& operator()(size_t i, size_t j) const {
+        if (i >= data.size() || j >= data[0].size()) throw out_of_range("Matrix indices out of range");
+        return data[i][j];
+    }
+
+    size_t getRows() const { return data.size(); }
+    size_t getCols() const { return data.empty() ? 0 : data[0].size(); }
+
+    MatrixPointer power(unsigned n) const;
+    MatrixPointer operator*(const MatrixPointer& other) const;
+
+    static MatrixPointer identity(size_t size) {
+        MatrixPointer m(size, size);
+        for (size_t i = 0; i < size; ++i) m(i, i) = 1;
+        return m;
+    }
+
+    void print() const {
+        for (const auto& row : data) {
+            for (double val : row) {
+                cout << setw(8) << fixed << setprecision(2) << val;
+            }
+            cout << endl;
+        }
+    }
+};
+
+// Реализация методов для MatrixLinear
+MatrixLinear MatrixLinear::power(unsigned n) const {
+    if (rows != cols) throw invalid_argument("Matrix must be square");
+    if (n == 0) return identity(rows);
+
+    MatrixLinear result = *this;
+    for (unsigned i = 1; i < n; ++i) {
+        result = result * *this;
+    }
+    return result;
 }
 
-// Точное значение функции y = 1/(1+x) + (x - 1)
-double exact_value(double x) {
-    return (1.0 / (1.0 + x)) + (x - 1.0);
+MatrixLinear MatrixLinear::operator*(const MatrixLinear& other) const {
+    if (cols != other.rows) throw invalid_argument("Incompatible matrix sizes");
+
+    MatrixLinear result(rows, other.cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < other.cols; ++j) {
+            double sum = 0;
+            for (size_t k = 0; k < cols; ++k) {
+                sum += (*this)(i, k) * other(k, j);
+            }
+            result(i, j) = sum;
+        }
+    }
+    return result;
 }
 
+// Реализация методов для MatrixPointer
+MatrixPointer MatrixPointer::power(unsigned n) const {
+    if (getRows() != getCols()) throw invalid_argument("Matrix must be square");
+    if (n == 0) return identity(getRows());
+
+    MatrixPointer result = *this;
+    for (unsigned i = 1; i < n; ++i) {
+        result = result * *this;
+    }
+    return result;
+}
+
+MatrixPointer MatrixPointer::operator*(const MatrixPointer& other) const {
+    if (getCols() != other.getRows()) throw invalid_argument("Incompatible matrix sizes");
+
+    MatrixPointer result(getRows(), other.getCols());
+    for (size_t i = 0; i < getRows(); ++i) {
+        for (size_t j = 0; j < other.getCols(); ++j) {
+            double sum = 0;
+            for (size_t k = 0; k < getCols(); ++k) {
+                sum += (*this)(i, k) * other(k, j);
+            }
+            result(i, j) = sum;
+        }
+    }
+    return result;
+}
+
+// Демонстрация работы обоих классов
 int main() {
-    const double x0 = -0.5;
-    const double xn = 0.5;
-    const double delta_x = 0.1;
-    const double epsilon = 1e-6;
+    try {
+        cout << "=== Linear representation of a matrix ===" << endl;
+        MatrixLinear ml(2, 2);
+        ml(0, 0) = 1; ml(0, 1) = 2;
+        ml(1, 0) = 3; ml(1, 1) = 4;
 
-    vector<double> x_values;       // Точки x_i
-    vector<double> taylor_results; // Результаты ряда Тейлора
-    vector<double> exact_results;  // Точные значения
-    vector<int> terms_used;        // Количество слагаемых
+        cout << "old:" << endl;
+        ml.print();
 
-    
-    for (double x = x0; x <= xn + 1e-9; x += delta_x) {
-        try {
-            pair<double, int> taylor_data = taylor_series(x, epsilon);
-            double taylor_sum = taylor_data.first;
-            int num_terms = taylor_data.second;
+        auto ml_pow = ml.power(3);
+        cout << "\nnew (^3):" << endl;
+        ml_pow.print();
 
-            double y_taylor = taylor_sum + (x - 1.0);
-            double y_exact = exact_value(x);
+        cout << "\n=== array of pointers ===" << endl;
+        MatrixPointer mp(2, 2);
+        mp(0, 0) = 1; mp(0, 1) = 1;
+        mp(1, 0) = 1; mp(1, 1) = 0;
 
-            x_values.push_back(x);
-            taylor_results.push_back(y_taylor);
-            exact_results.push_back(y_exact);
-            terms_used.push_back(num_terms);
-        }
-        catch (const invalid_argument& e) {
-            cerr << "Ошибка при x = " << x << ": " << e.what() << endl;
-        }
+        cout << "old:" << endl;
+        mp.print();
+
+        auto mp_pow = mp.power(6);
+        cout << "\nnew (^6):" << endl;
+        mp_pow.print();
+
     }
-
-    cout << fixed << setprecision(6);
-    cout << "   x    |  Taylor (y) | computer (y) | number terms | difference\n";
-    cout << "---------|-------------|----------------|-----------|---------\n";
-
-    for (size_t i = 0; i < x_values.size(); ++i) {
-        double diff = abs(taylor_results[i] - exact_results[i]);
-        cout << setw(7) << x_values[i] << " | "
-            << setw(11) << taylor_results[i] << " | "
-            << setw(14) << exact_results[i] << " | "
-            << setw(9) << terms_used[i] << " | "
-            << setw(7) << diff << "\n";
+    catch (const exception& e) {
+        cerr << "error: " << e.what() << endl;
+        return 1;
     }
 
     return 0;
